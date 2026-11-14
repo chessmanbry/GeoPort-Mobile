@@ -1,0 +1,7 @@
+.DS_Store
+.venv*/
+__pycache__/
+dist/
+*.mobileprovision
+*.p12
+*pairing*.plist

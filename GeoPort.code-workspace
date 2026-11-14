@@ -1,0 +1,35 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "extensions": {
+    "recommendations": [
+      "swiftlang.swift-vscode",
+      "vscjava.vscode-java-pack"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Android：建置測試 APK",
+        "type": "shell",
+        "command": "./gradlew",
+        "args": [":app:assembleDebug"],
+        "options": { "cwd": "${workspaceFolder}/android-app" },
+        "windows": { "command": ".\\gradlew.bat" },
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "iOS：建置未簽署 IPA（macOS）",
+        "type": "process",
+        "command": "bash",
+        "args": ["build-unsigned.sh"],
+        "options": { "cwd": "${workspaceFolder}/mobile-app" },
+        "group": "build",
+        "problemMatcher": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeoPort · USB 定位</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#17243b;font:16px system-ui}main{max-width:1160px;margin:auto;padding:28px}h1{margin:0 0 8px}p{line-height:1.6}.grid{display:grid;grid-template-columns:330px 1fr;gap:20px}section{background:white;padding:22px;border-radius:16px;border:1px solid #dce2ea}label{display:block;margin:18px 0 6px}input,select,button{width:100%;padding:12px;border-radius:8px;border:1px solid #bbc6d7;font:inherit}button{cursor:pointer;margin-top:12px;background:#214fc5;color:white;border:0}button.secondary{background:#e8edf7;color:#17243b}button:disabled{opacity:.45;cursor:default}#map{height:540px;border-radius:12px;background:#e5ebf1}#status{white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;background:#eef2f8;border-radius:10px}small{display:block;margin-top:12px;color:#536079}#feedback{min-height:48px;white-space:pre-wrap} @media(max-width:800px){.grid{grid-template-columns:1fr}#map{height:380px}main{padding:16px}}
+</style></head><body><main>
+<h1>GeoPort · USB 定位</h1><p>macOS／Windows 11 預覽版，適用於 iOS 26。連接手機後，可在地圖選點或直接輸入經緯度。</p>
+<div class="grid"><section>
+<label for="device">USB 裝置</label><select id="device"><option value="">尚未讀取</option></select>
+<button id="refresh" class="secondary">重新搜尋</button><button id="connect">連接手機</button>
+<label for="lat">緯度</label><input id="lat" type="number" min="-90" max="90" step="any" value="25.0330">
+<label for="lng">經度</label><input id="lng" type="number" min="-180" max="180" step="any" value="121.5654">
+<button id="set" disabled>設定位置</button><button id="clear" class="secondary" disabled>停止定位（清除模擬）</button><button id="disconnect" class="secondary" disabled>清除並中斷連線</button>
+<small>關閉網頁不會停止模擬。離開前請按「停止定位」或「清除並中斷連線」。</small>
+</section><section><div id="map"></div><p id="feedback" role="status" aria-live="polite">請解鎖手機、信任此電腦，並啟用開發者模式。</p><div id="status">未連線</div><small>地圖圖資需網路；若地圖無法載入，仍可輸入經緯度操作。指令完成後請在手機地圖確認實際位置。</small></section></div>
+</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
+let busy=false, connected=false, map, marker;
+const el=id=>document.getElementById(id);
+function controls(){for(const id of ['set','clear','disconnect']) el(id).disabled=busy||!connected;el('connect').disabled=busy||connected||!el('device').value;el('refresh').disabled=busy||connected;el('device').disabled=busy||connected;}
+function show(state){connected=state.connected;el('status').textContent=state.error||(!connected?'未連線':state.position?`已送出模擬位置：${state.position.join(', ')}`:'已連線；可設定或清除位置');controls();}
+async function api(path,data){const response=await fetch('/api/'+path,data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw new Error(result.error||'操作失敗');return result;}
+async function run(action){if(busy)return;busy=true;controls();try{await action();}catch(error){el('feedback').textContent=error.message;}finally{busy=false;controls();}}
+async function refresh(){el('feedback').textContent='正在搜尋 USB 裝置…';const devices=await api('devices');el('device').replaceChildren();for(const d of devices){const option=document.createElement('option');option.value=d.Identifier||d.UniqueDeviceID;option.textContent=`${d.DeviceName} · iOS ${d.ProductVersion}`;el('device').append(option);}el('feedback').textContent=devices.length?'請選擇手機並連線。':'未找到 USB 手機，請檢查接線與信任提示。';}
+el('device').onchange=controls;
+el('refresh').onclick=()=>run(refresh);
+for(const op of ['connect','set','clear','disconnect'])el(op).onclick=()=>run(async()=>{let data={};if(op==='connect')data.udid=el('device').value;if(op==='set'){if(!el('lat').value.trim()||!el('lng').value.trim())throw new Error('請輸入經緯度');data={lat:Number(el('lat').value),lng:Number(el('lng').value)};if(!Number.isFinite(data.lat)||!Number.isFinite(data.lng)||Math.abs(data.lat)>90||Math.abs(data.lng)>180)throw new Error('經緯度超出範圍');}el('feedback').textContent=op==='connect'?'正在準備開發者服務與連線；首次可能需下載映像…':'正在執行…';show(await api(op,data));el('feedback').textContent=op==='set'?'座標指令已送出，請在手機確認藍點位置。':op==='clear'||op==='disconnect'?'清除指令已送出，請在手機確認恢復實際位置。':'手機已連線。';});
+if(window.L){map=L.map('map').setView([25.0330,121.5654],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);marker=L.marker([25.0330,121.5654]).addTo(map);map.on('click',event=>{el('lat').value=event.latlng.lat.toFixed(6);el('lng').value=event.latlng.lng.toFixed(6);marker.setLatLng(event.latlng);});}else{el('map').textContent='地圖未載入；請使用左側經緯度欄位。';}
+run(async()=>{show(await api('status'));if(!connected)await refresh();});
+setInterval(()=>{if(!busy)run(async()=>show(await api('status')));},5000);
+</script></body></html>

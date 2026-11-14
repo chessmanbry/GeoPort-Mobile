@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">GeoPort Mobile</string>
+    <string name="simulation_start_error">無法啟動模擬，請從 GeoPort Mobile 重新操作。</string>
+    <string name="simulation_stop_error">無法開啟恢復程序，請回到 GeoPort Mobile 後重試。</string>
+    <string name="map_attribution" translatable="false">© OpenStreetMap contributors</string>
+    <style name="GeoPortTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#08796A</item>
+        <item name="android:windowBackground">#F5F7F4</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="android:statusBarColor">#F5F7F4</item>
+        <item name="android:navigationBarColor">#F5F7F4</item>
+    </style>
+</resources>
